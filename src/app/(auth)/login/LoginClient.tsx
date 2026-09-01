@@ -4,16 +4,20 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { AuthCard } from "@/components/auth/AuthCard";
 import { Input, Button, useAuthSubmit } from "@/components/auth/AuthForm";
+import { useToast } from "react-hot-toast";
 
 export default function LoginClient() {
   const params = useSearchParams();
   const next = params.get("next") || "/dashboard";
   const [code, setCode] = useState("0425");
   const { submit, loading, error, info } = useAuthSubmit("/api/auth/login", { redirectTo: next as string });
+  const toast = useToast();
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     await submit({ code });
+    if (info) toast.info(info);
+    if (error) toast.error(error);
   }
 
   return (
@@ -29,7 +33,7 @@ export default function LoginClient() {
         </div>
         {error && <p className="rounded-xl bg-red-50 border border-red-200 px-3 py-2 text-sm text-red-700">{error}</p>}
         {info && <p className="rounded-xl bg-amber-50 border border-amber-200 px-3 py-2 text-sm text-amber-800">{info}</p>}
-        <Button type="submit" loading={loading}>Log in</Button>
+        <Button type="submit" loading={logging}>Log in</Button>
       </form>
     </AuthCard>
   );

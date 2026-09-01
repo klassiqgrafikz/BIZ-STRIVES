@@ -2,7 +2,6 @@
 import { useState } from "react";
 import Link from "next/link";
 import { AuthCard } from "@/components/auth/AuthCard";
-import { Button } from "@/components/auth/AuthForm";
 
 export default function SignupPage() {
   return (
