@@ -10,9 +10,5 @@
       "path": "/api/crons/birthday",
       "schedule": "0 7 * * *"
     }
-  ],
-  "env": {
-    "DATABASE_URL": "@database-url",
-    "JWT_SECRET": "@jwt-secret"
-  }
+  ]
 }
