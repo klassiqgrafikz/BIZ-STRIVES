@@ -1,41 +1,47 @@
-// Resend integration — Phase 14
-// Vercel-unified: uses RESEND_API_KEY env
-import { Resend } from "resend";
+// Nodemailer Gmail SMTP — Production email transport
+// Vercel-unified: uses GMAIL_USER + GMAIL_APP_PASSWORD env
+// Replace/reset Resend env vars after deploying (RESEND_API_KEY still loaded but ignored)
 
-const apiKey = process.env.RESEND_API_KEY;
-export const resend = apiKey && apiKey !== "re_dev_key" ? new Resend(apiKey) : null;
+import nodemailer from "nodemailer";
 
-const FROM = process.env.RESEND_FROM || "BIZ-STRIVES <noreply@example.com>";
+// Create reusable transporter using Gmail SMTP
+// Port 465 = SSL, Port 587 = STARTTLS — we use 465 with secure: true
+export const transporter = nodemailer.createTransport({
+  host: "smtp.gmail.com",
+  port: 465,
+  secure: true, // true for 465, false for 587 with STARTTLS
+  auth: {
+    user: process.env.GMAIL_USER,
+    pass: process.env.GMAIL_APP_PASSWORD,
+  },
+});
 
-export type SendEmailParams = {
+// Send email via Gmail SMTP
+// Same params as old Resend version: { to, subject, html, text?, attachments? }
+export async function sendEmail(params: {
   to: string;
   subject: string;
   html: string;
   text?: string;
   attachments?: { filename: string; content: Buffer }[];
-};
-
-export async function sendEmail(params: SendEmailParams): Promise<{ ok: boolean; error?: string; id?: string }> {
-  if (!resend) {
-    console.log("[email:stub] Would send", { to: params.to, subject: params.subject });
-    return { ok: true, id: "stub-dev" };
-  }
+}): Promise<{ ok: boolean; error?: string; id?: string }> {
   try {
-    const { data, error } = await resend.emails.send({
-      from: FROM,
+    const info = await transporter.sendMail({
+      from: `BIZ-STRIVES <${process.env.GMAIL_USER}>`,
       to: params.to,
       subject: params.subject,
       html: params.html,
       text: params.text,
+      ...(params.attachments && { attachments }),
     });
-    if (error) return { ok: false, error: String(error) };
-    return { ok: true, id: data?.id };
+    return { ok: true, id: info.messageId };
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
     return { ok: false, error: msg };
   }
 }
 
+// monthlyStatementHtml — unchanged from original, kept for parity
 export function monthlyStatementHtml(opts: {
   businessName: string;
   periodLabel: string;
