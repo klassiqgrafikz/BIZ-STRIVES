@@ -26,14 +26,24 @@ export async function sendEmail(params: {
   attachments?: { filename: string; content: Buffer }[];
 }): Promise<{ ok: boolean; error?: string; id?: string }> {
   try {
-    const info = await transporter.sendMail({
+    const sendOptions: {
+      from: string;
+      to: string;
+      subject: string;
+      html: string;
+      text?: string;
+      attachments?: { filename: string; content: Buffer }[];
+    } = {
       from: `BIZ-STRIVES <${process.env.GMAIL_USER}>`,
       to: params.to,
       subject: params.subject,
       html: params.html,
       text: params.text,
-      ...(params.attachments && { attachments }),
-    });
+    };
+    if (params.attachments) {
+      sendOptions.attachments = params.attachments;
+    }
+    const info = await transporter.sendMail(sendOptions);
     return { ok: true, id: info.messageId };
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
