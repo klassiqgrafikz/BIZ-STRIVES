@@ -21,6 +21,9 @@ export function getTokenFromRequest(req: Request): string | null {
   return cookies[COOKIE_NAME] || null;
 }
 
+// Import JWT verification types and functions
+import { verifyAccessToken, JwtPayload } from "./jwt";
+
 // Verify request auth - checks for hardcoded 0425 login OR JWT token
 export function verifyRequestAuth(req: Request): JwtPayload | null {
   // First check for hardcoded 0425 login
