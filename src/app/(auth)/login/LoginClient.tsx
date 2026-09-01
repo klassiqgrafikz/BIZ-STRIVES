@@ -4,20 +4,16 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { AuthCard } from "@/components/auth/AuthCard";
 import { Input, Button, useAuthSubmit } from "@/components/auth/AuthForm";
-import { useToast } from "react-hot-toast";
 
 export default function LoginClient() {
   const params = useSearchParams();
   const next = params.get("next") || "/dashboard";
   const [code, setCode] = useState("0425");
   const { submit, loading, error, info } = useAuthSubmit("/api/auth/login", { redirectTo: next as string });
-  const toast = useToast();
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     await submit({ code });
-    if (info) toast.info(info);
-    if (error) toast.error(error);
   }
 
   return (
