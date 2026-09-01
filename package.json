@@ -6,8 +6,8 @@
   "engines": { "node": ">=20" },
   "scripts": {
     "dev": "next dev --webpack",
-    "build": "prisma generate && next build --webpack",
-    "vercel-build": "prisma generate && prisma db push --accept-data-loss && next build --webpack",
+    "build": "node scripts/build.js",
+    "vercel-build": "node scripts/build.js",
     "start": "next start",
     "lint": "next lint",
     "test": "vitest run",
