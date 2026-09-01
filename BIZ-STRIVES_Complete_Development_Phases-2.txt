@@ -1,0 +1,1607 @@
+BIZ-STRIVES — COMPLETE DEVELOPMENT PHASES
+=============================================
+
+Project Vision
+--------------
+BIZ-STRIVES is a scalable business finance management platform.
+
+The first version is for personal use, but the architecture must support
+multiple businesses and users in the future.
+
+IMPORTANT CORE PRINCIPLE:
+BIZ-STRIVES is NOT a complicated double-entry accounting/ERP system.
+
+The core financial engine must remain simple:
+
+    TOTAL MONEY RECEIVED
+    - BUSINESS EXPENSES
+    - PERSONAL SPENDING
+    = MONEY REMAINING
+
+Savings/reserved money is NOT treated as an expense. It is money allocated
+and reserved from available funds.
+
+The platform should feel simple enough for a small business owner to use
+every day while being architected cleanly enough to become a SaaS product.
+
+============================================================
+PHASE 0 — PROJECT FOUNDATION & ARCHITECTURE
+============================================================
+
+Goal:
+Create the technical foundation before building major features.
+
+Requirements:
+- Platform name: BIZ-STRIVES
+- Business/workspace name is configurable from the dashboard.
+- Initial business can be "Klassiq Grafikz", but the platform itself must
+  remain generic.
+- Design for multi-user/multi-business support from the beginning.
+- Do not make the core system dependent on Supabase.
+- Frontend may be deployed on Vercel or another suitable platform.
+- Backend/database should be independently controlled.
+- Prefer a self-hostable architecture.
+
+Recommended stack:
+- Frontend: Next.js + React + TypeScript
+- Styling: Tailwind CSS
+- Backend: Node.js with NestJS or a clean modular Node.js API
+- Database: PostgreSQL
+- ORM: Prisma or Drizzle
+- Background jobs: Redis + BullMQ or equivalent
+- File storage: S3-compatible object storage
+- Email: transactional email provider with API
+- PDF generation: server-side PDF generation
+- Authentication: secure session/JWT architecture
+- Deployment: Docker-friendly/Vercel/appwrite/render/netflify
+
+Architecture principles:
+- Modular backend
+- REST API or well-structured API layer
+- Strong validation
+- Centralized error handling
+- Audit logging for important financial changes
+- Database migrations
+- Environment variables for secrets
+- No financial secrets hard-coded
+- Secure authentication
+- User/business data isolation
+- Automated database backups
+- Logging and monitoring
+
+============================================================
+PHASE 1 — AUTHENTICATION & BUSINESS SETUP
+============================================================
+
+Goal:
+Allow a user to securely create and manage a BIZ-STRIVES workspace.
+
+Build:
+- Sign up
+- Login
+- Logout
+- Password reset
+- Email verification if appropriate
+- Session management
+- User profile
+- Business/workspace creation
+- Business name
+- Business logo
+- Business email
+- Business phone
+- Business address
+- Business description
+- Timezone
+- Base currency
+- Date format preferences
+
+Future-ready:
+- Multiple users per business
+- Business invitations
+- Roles and permissions
+
+Initial roles to prepare for:
+- Owner
+- Admin
+- Accountant
+- Staff
+- Viewer
+
+
+
+============================================================
+PHASE 2 — MULTI-CURRENCY SYSTEM
+============================================================
+
+Goal:
+Support multiple currencies without corrupting financial records.
+
+Requirements:
+- Currency selector/switcher
+- Default/base business currency
+- Transaction-level currency
+- Currency symbol
+- Currency code
+- Exchange-rate support
+- Base-currency equivalent
+- Currency formatting
+- Currency preferences
+
+Location detection:
+- Detect approximate user location when possible.
+- Suggest a currency based on location.
+- Example: Nigeria -> NGN / ₦
+- User must be able to manually change the currency.
+- Location detection must NEVER silently alter existing financial records.
+
+Important:
+Each transaction should retain its original currency.
+
+Example:
+Amount: $500
+Currency: USD
+Exchange rate: configurable/current rate
+Base equivalent: NGN equivalent
+
+Future:
+- Automatic exchange-rate API
+- Historical exchange rates
+- Multi-currency reports
+
+============================================================
+PHASE 3 — ACCOUNTS / MONEY LOCATIONS
+============================================================
+
+Goal:
+Allow users to track where their money is held.
+
+Examples:
+- GTBank
+- OPay
+- Access Bank
+- Cash
+- Business Savings
+- Other bank accounts
+
+Each account should have:
+- Name
+- Type
+- Currency
+- Opening balance
+- Current balance
+- Status
+- Notes
+
+Account types:
+- Bank
+- Cash
+- Savings
+- Mobile Money
+- Other
+
+Users should be able to:
+- Add account
+- Edit account
+- Archive account
+- View account balance
+- View account transactions
+- Transfer money between accounts
+
+Transfers must NOT be counted as income or expense.
+
+============================================================
+PHASE 4 — CORE FINANCIAL ENGINE
+============================================================
+
+THIS IS THE MOST IMPORTANT PHASE.
+
+Keep the financial model SIMPLE.
+
+The platform must NOT use double-entry accounting as the main user-facing
+financial engine.
+
+Core formula:
+
+    TOTAL INCOME
+    - TOTAL BUSINESS EXPENSES
+    - TOTAL PERSONAL SPENDING
+    = MONEY REMAINING
+
+Savings/reserved funds are tracked separately.
+
+Transaction types:
+- INCOME
+- BUSINESS_EXPENSE
+- PERSONAL_SPENDING
+- SAVINGS_ALLOCATION
+- SAVINGS_WITHDRAWAL
+- ACCOUNT_TRANSFER
+- OTHER
+
+Income:
+- Amount
+- Currency
+- Date
+- Customer
+- Project
+- Description
+- Payment method
+- Account received into
+- Reference
+- Status
+- Notes
+
+Business expense:
+- Amount
+- Currency
+- Date
+- Category
+- Account
+- Description
+- Vendor/payee
+- Reference
+- Notes
+
+Personal spending:
+- Amount
+- Currency
+- Date
+- Category
+- Account
+- Description
+- Notes
+
+Every transaction must have an actual date.
+
+Do NOT only store monthly totals.
+
+The system must be able to reconstruct:
+- Daily
+- Weekly
+- Monthly
+- Quarterly
+- Yearly
+- Custom date range
+
+financial records from individual transactions.
+
+============================================================
+PHASE 5 — CATEGORIES
+============================================================
+
+Goal:
+Make financial records easy to classify.
+
+Default income categories:
+- Website Development
+- Graphic Design
+- Branding
+- Video Editing
+- Photography
+- Consulting
+- Other Services
+- Other Income
+
+Default business expense categories:
+- Internet
+- Hosting
+- Domain
+- Software
+- Advertising
+- Equipment
+- Transport
+- Electricity
+- Office
+- Communication
+- Maintenance
+- Other
+
+Default personal spending categories:
+- Food
+- Transport
+- Shopping
+- Family
+- Entertainment
+- Bills
+- Personal
+- Other
+
+Requirements:
+- User can create custom categories.
+- User can rename categories where safe.
+- User can archive categories.
+- Existing transactions must retain historical category information.
+
+============================================================
+PHASE 6 — CUSTOMERS
+============================================================
+
+Goal:
+Create a useful customer database.
+
+Customer fields:
+- Full name
+- Email
+- Phone
+- Company
+- Birthday
+- Address
+- Notes
+- Date added
+
+Customer profile should show:
+- Total money received from customer
+- Number of projects
+- Projects
+- Payments
+- Invoices
+- Outstanding balances
+- Communication history
+
+Search/filter:
+- Name
+- Email
+- Phone
+- Company
+
+Future:
+- Customer tags
+- Customer segmentation
+- Customer lifetime value
+- Customer activity timeline
+
+============================================================
+PHASE 7 — PROJECTS / SERVICES
+============================================================
+
+Goal:
+Connect customer payments to actual work.
+
+Project fields:
+- Customer
+- Project name
+- Service type
+- Description
+- Start date
+- Due date
+- Agreed amount
+- Amount paid
+- Outstanding amount
+- Status
+- Notes
+
+Statuses:
+- Draft
+- Active
+- Completed
+- Cancelled
+- On Hold
+
+Project payment history:
+- Payment date
+- Amount
+- Account
+- Currency
+- Reference
+
+The project system should connect to:
+- Customers
+- Income
+- Invoices
+
+============================================================
+PHASE 8 — INVOICE SYSTEM
+============================================================
+
+Goal:
+Allow users to create professional invoices.
+
+V1 should support MANUAL sending.
+
+Invoice fields:
+- Invoice number
+- Business information
+- Customer information
+- Invoice date
+- Due date
+- Items/services
+- Quantity
+- Unit price
+- Discount
+- Tax field if enabled
+- Total
+- Amount paid
+- Balance due
+- Notes
+- Terms
+
+Invoice statuses:
+- Draft
+- Sent
+- Partially Paid
+- Paid
+- Overdue
+- Cancelled
+
+Features:
+- Create invoice
+- Edit invoice
+- Duplicate invoice
+- Generate invoice PDF
+- Download invoice
+- Mark invoice as sent
+- Record payment
+- Mark as paid
+- Track outstanding amount
+
+Do NOT require payment gateways for V1.
+
+Future:
+- Online payment links
+- Automatic payment confirmation
+- Payment provider webhooks
+
+============================================================
+PHASE 9 — SAVINGS & RESERVED FUNDS
+============================================================
+
+Goal:
+Allow users to allocate money for future purposes.
+
+Savings is NOT treated as a normal business expense.
+
+Example:
+
+Total money:
+NGN 500,000
+
+Reserved savings:
+NGN 100,000
+
+Available:
+NGN 400,000
+
+Savings goals:
+- Emergency Fund
+- New Laptop
+- Tax Reserve
+- Equipment
+- Personal Goal
+- Custom Goal
+
+Savings goal fields:
+- Name
+- Target amount
+- Current amount
+- Currency
+- Target date
+- Frequency
+- Notes
+- Status
+
+Contribution frequencies:
+- Daily
+- Weekly
+- Biweekly
+- Monthly
+- Custom
+
+Features:
+- Add contribution
+- Remove/withdraw contribution
+- Progress percentage
+- Remaining amount
+- Target date
+- Contribution history
+- Goal completion
+
+Weekly savings:
+- Allow recurring weekly savings plans.
+- Show upcoming contribution.
+- Show contribution history.
+
+============================================================
+PHASE 10 — DASHBOARD
+============================================================
+
+Goal:
+Create the main BIZ-STRIVES financial overview.
+
+Dashboard should show selected period, especially current month.
+
+Core cards:
+- Total Money Received
+- Business Expenses
+- Personal Spending
+- Money Remaining
+- Reserved Savings
+- Available Money
+- Outstanding Invoices
+- Customer Count
+
+Optional cards:
+- Number of transactions
+- Number of active projects
+- Average monthly income
+- Year-to-date income
+
+Charts:
+- Income over time
+- Business expenses over time
+- Personal spending over time
+- Money remaining
+- Income vs money out
+- Savings progress
+
+Recent transactions:
+- Income
+- Business expense
+- Personal spending
+- Savings allocation
+- Transfers
+
+Quick actions:
+- Add income
+- Add expense
+- Add personal spending
+- Add customer
+- Create project
+- Create invoice
+- Add savings
+- Transfer money
+
+============================================================
+PHASE 11 — REPORTS & ANALYTICS
+============================================================
+
+Goal:
+Help the business owner understand performance.
+
+Time filters:
+- Today
+- This week
+- This month
+- Last month
+- This quarter
+- This year
+- Custom range
+
+Reports:
+- Income report
+- Business expense report
+- Personal spending report
+- Money remaining report
+- Savings report
+- Customer revenue report
+- Project revenue report
+- Account report
+- Category report
+
+Analytics:
+- Highest earning month
+- Lowest earning month
+- Top customers
+- Top services/projects
+- Largest expenses
+- Expense categories
+- Personal spending totals
+- Savings progress
+- Year-to-date income
+- Year-to-date money remaining
+
+Keep terminology understandable.
+Do not overwhelm small-business users with traditional accounting terminology.
+
+============================================================
+PHASE 12 — MONTHLY RECORD & MONTH-END CLOSING
+============================================================
+
+Goal:
+Automatically create a complete record for every month.
+
+Every calendar month should have a monthly record.
+
+Example:
+
+August 2026
+- Opening balance
+- Total income
+- Business expenses
+- Personal spending
+- Savings allocated
+- Transfers
+- Money remaining
+- Closing balance
+- Transaction count
+- Customer activity
+
+At month end:
+- Calculate totals
+- Generate monthly report
+- Generate statement
+- Save statement
+- Email statement
+- Mark month as closed
+
+Monthly closing schedule:
+- Last day of each month
+- Configurable time
+- Default timezone based on business/user settings
+
+Important:
+A closed month should be LOCKED.
+
+Closed month:
+- View allowed
+- Export allowed
+- Editing blocked by default
+
+To edit:
+- User chooses "Reopen Month"
+- Confirm action
+- Make correction
+- Recalculate affected totals
+- Re-close month
+
+Maintain audit records for reopening/editing closed periods.
+
+============================================================
+PHASE 13 — AUTOMATED MONTHLY STATEMENT
+============================================================
+
+Goal:
+Generate a downloadable statement automatically.
+
+Statement should contain:
+
+BIZ-STRIVES
+Business Name
+
+Period:
+August 1 - August 31, 2026
+
+SUMMARY
+- Opening Balance
+- Total Money Received
+- Total Business Expenses
+- Total Personal Spending
+- Money Remaining
+- Reserved Savings
+- Available Money
+- Closing Balance
+
+INCOME DETAILS
+- Date
+- Customer
+- Project/service
+- Amount
+- Account
+- Reference
+
+BUSINESS EXPENSE DETAILS
+- Date
+- Category
+- Description
+- Amount
+- Account
+
+PERSONAL SPENDING DETAILS
+- Date
+- Category
+- Description
+- Amount
+- Account
+
+SAVINGS DETAILS
+- Date
+- Goal
+- Amount
+
+ACCOUNT SUMMARY
+- Account name
+- Opening balance
+- Money in
+- Money out
+- Closing balance
+
+CUSTOMER SUMMARY
+- Customer
+- Total paid
+- Outstanding amount if applicable
+
+Generate:
+- PDF statement
+- Optional CSV export
+- Optional Excel export in future
+
+Store generated statements so they can be accessed later.
+
+Statement archive:
+2026
+  January
+  February
+  March
+  ...
+  August
+  September
+
+============================================================
+PHASE 14 — EMAIL SYSTEM
+============================================================
+
+Goal:
+Allow configurable email notifications.
+
+Settings:
+- Email address
+- Monthly statement enabled/disabled
+- Statement format
+- Email subject
+- Time of sending
+- Timezone
+
+Monthly automation:
+Last day of month
+    ->
+Calculate report
+    ->
+Generate PDF
+    ->
+Save PDF
+    ->
+Send email
+    ->
+Log result
+
+Email should contain:
+- Summary figures
+- Attached PDF statement
+- Business branding
+
+Email logs:
+- Recipient
+- Type
+- Date
+- Status
+- Error message if failed
+- Retry count
+
+Failed email jobs should be retried.
+
+============================================================
+PHASE 15 — NOTIFICATION CENTER
+============================================================
+
+Goal:
+Create a BIZ-STRIVES notification system.
+
+Examples:
+
+"₦200,000 received."
+
+"Invoice INV-0042 is overdue."
+
+"Your weekly savings contribution is due."
+
+"August statement has been generated."
+
+"Your monthly report is ready."
+
+Notifications should have:
+- Type
+- Title
+- Message
+- Date
+- Read/unread
+- Action link
+
+Channels:
+V1:
+- In-app notifications
+- Email
+
+Future:
+- Browser push
+- Mobile push
+- WhatsApp
+- SMS
+
+============================================================
+PHASE 16 — MONEY RECEIVED DETECTION / ALLOCATION ASSISTANT
+============================================================
+
+Goal:
+Eventually detect incoming bank/payment transactions and notify the user.
+
+IMPORTANT:
+This is NOT required for V1.
+
+Desired future experience:
+
+Bank/payment provider
+    ->
+Transaction detected
+    ->
+BIZ-STRIVES receives notification
+    ->
+"Hey! You just received ₦200,000."
+    ->
+"Want to allocate this money?"
+
+Allocation options:
+- Business operations
+- Savings
+- Tax reserve
+- Personal
+- Available funds
+- Custom section
+
+User confirms allocation.
+
+The system then records the appropriate financial movement.
+
+For direct bank transactions:
+- Use approved banking/open-banking integrations.
+- Never store bank passwords.
+- Use secure authorization/consent mechanisms.
+- Keep integration credentials encrypted.
+- Log synchronization events.
+- Avoid automatic classification unless user explicitly enables it.
+
+For website/payment-provider transactions:
+- Webhooks can be used later.
+- Successful payments can create/confirm income records.
+
+============================================================
+PHASE 17 — CUSTOMER COMMUNICATION
+============================================================
+
+Goal:
+Create customer messaging tools.
+
+Customer communication types:
+- Monthly appreciation message
+- Birthday message
+- Payment confirmation
+- Invoice reminder
+- Project update
+- Custom campaign
+
+Customer segmentation:
+- All customers
+- Customers active this month
+- Customers who paid this month
+- Customers with outstanding invoices
+- Customers with active projects
+- Custom groups
+
+V1:
+- Create message
+- Preview message
+- Select recipients
+- Send manually or schedule
+
+Future should be built into the system:
+- Automatic campaigns
+- Email
+- WhatsApp
+- SMS
+
+============================================================
+PHASE 18 — BIRTHDAY AUTOMATION
+============================================================
+
+Goal:
+Automatically send birthday greetings to customers.
+
+Customer record must contain birthday.
+
+Automation:
+
+Birthday date arrives
+    ->
+Find matching customers
+    ->
+Load birthday template
+    ->
+Personalize message
+    ->
+Send through enabled channel
+    ->
+Record communication
+
+Settings:
+- Enable/disable birthday messages
+- Send on birthday
+- Optional send before birthday
+- Email/WhatsApp/SMS selection
+- Message template
+- Business branding
+
+Example:
+"Happy Birthday, John! Everyone at Klassiq Grafikz wishes you a
+wonderful birthday and an amazing year ahead."
+
+============================================================
+PHASE 19 — AUTOMATION ENGINE
+============================================================
+
+Goal:
+Create a reusable automation framework instead of hard-coding every
+automation.
+
+Model:
+
+TRIGGER
+    ->
+CONDITION
+    ->
+ACTION
+
+Examples:
+
+Trigger:
+Month ends
+
+Action:
+Generate statement
+
+Trigger:
+Statement generated
+
+Action:
+Email statement
+
+Trigger:
+Customer birthday
+
+Action:
+Send birthday message
+
+Trigger:
+Payment detected
+
+Action:
+Notify user
+
+Trigger:
+Savings date arrives
+
+Action:
+Notify user
+
+Automation fields:
+- Name
+- Trigger type
+- Conditions
+- Action type
+- Schedule
+- Enabled/disabled
+- Last run
+- Next run
+- Error state
+
+Automation logs:
+- Started
+- Completed
+- Failed
+- Retry
+- Error
+
+Use background workers for scheduled/long-running tasks.
+
+============================================================
+PHASE 20 — SEARCH, FILTERS & DATA EXPORT
+============================================================
+
+Goal:
+Make the data easy to find and retrieve.
+
+Global search:
+- Customers
+- Projects
+- Invoices
+- Transactions
+- Statements
+
+Filters:
+- Date
+- Type
+- Category
+- Account
+- Customer
+- Project
+- Currency
+- Amount range
+
+Exports:
+- CSV
+- PDF
+- Excel 
+
+Users should be able to export their financial data.
+
+============================================================
+PHASE 21 — SECURITY & AUDIT
+============================================================
+
+Goal:
+Protect sensitive financial information.
+
+Requirements:
+- HTTPS
+- Secure authentication
+- Password hashing
+- Session protection
+- Rate limiting
+- Input validation
+- Server-side authorization
+- Business-level data isolation
+- Encrypted secrets
+- Secure file access
+- Database backups
+- Audit logs
+
+Audit important actions:
+- Login
+- Transaction created
+- Transaction edited
+- Transaction deleted
+- Invoice created
+- Invoice changed
+- Month closed
+- Month reopened
+- Statement generated
+- Bank integration changed
+- Automation changed
+
+Never store:
+- Bank passwords
+- Card PINs
+- Sensitive credentials in plain text
+
+============================================================
+PHASE 22 — MULTI-TENANCY
+============================================================
+
+Goal:
+Turn BIZ-STRIVES into a scalable SaaS foundation.
+
+Every business-owned record should be linked to a business/workspace.
+
+Concept:
+
+USER
+  |
+  +-- BUSINESS A
+  |     +-- Accounts
+  |     +-- Transactions
+  |     +-- Customers
+  |     +-- Invoices
+  |     +-- Savings
+  |
+  +-- BUSINESS B
+        +-- Accounts
+        +-- Transactions
+        +-- Customers
+        +-- Invoices
+        +-- Savings
+
+Never allow one business to access another business's data.
+
+Future:
+- Team members
+- Roles
+- Permissions
+- Business switching
+- Multiple businesses per user
+
+============================================================
+PHASE 23 — ADMIN SYSTEM
+============================================================
+
+SaaS administration.
+
+Admin dashboard:
+- Users
+- Businesses
+- Active users
+- Storage
+- Transactions
+- System health
+- Failed jobs
+- Email failures
+- Integrations
+- Automations
+- Support requests
+
+Do not expose financial data unnecessarily to administrators.
+
+Implement least-privilege access.
+
+============================================================
+PHASE 24 — SAAS SUBSCRIPTIONS
+============================================================
+
+This is a future phase but build it into the system.
+
+Potential plans:
+- Free
+- Starter
+- Pro
+- Business
+- Enterprise
+
+Possible limits:
+- Number of businesses
+- Users
+- Customers
+- Invoices
+- Storage
+- Automations
+- Bank integrations
+- Reports
+
+Subscription billing should be isolated from the core financial engine.
+
+============================================================
+PHASE 25 — MOBILE / PWA EXPERIENCE
+============================================================
+
+Future.
+
+BIZ-STRIVES should eventually work very well on mobile.
+
+Priority:
+- Responsive web application
+- PWA
+- Add to home screen
+- Push notifications
+
+Possible native apps later:
+- Android
+- iOS
+
+The core API should remain platform-independent.
+
+============================================================
+PHASE 26 — TESTING & QUALITY
+============================================================
+
+Every major phase must have tests.
+
+Unit tests:
+- Financial calculations
+- Date calculations
+- Currency conversion
+- Savings calculations
+- Invoice totals
+- Monthly totals
+
+Integration tests:
+- Authentication
+- Database
+- Transactions
+- Customers
+- Invoices
+- Statements
+- Email jobs
+- Automation jobs
+
+End-to-end tests:
+- Login
+- Add income
+- Add expense
+- Add personal spending
+- Allocate savings
+- Create customer
+- Create invoice
+- Generate monthly statement
+- Close month
+
+Important financial test:
+
+Given:
+Income = ₦500,000
+Business expenses = ₦100,000
+Personal spending = ₦50,000
+
+Expected:
+Money remaining = ₦350,000
+
+Savings allocation of ₦100,000 should result in:
+Available money = ₦250,000
+Reserved savings = ₦100,000
+
+Savings must NOT reduce the business income/profit calculation as an
+expense.
+
+============================================================
+PHASE 27 — DEPLOYMENT
+============================================================
+
+Goal:
+Deploy without making the financial database dependent on a single
+frontend platform.
+
+Recommended architecture:
+
+Frontend:
+Next.js
+    ->
+Vercel or alternative
+
+Backend:
+Node/NestJS
+    ->
+Docker
+    ->
+VPS/cloud server
+
+Database:
+PostgreSQL
+    ->
+Managed PostgreSQL or self-hosted PostgreSQL
+
+Redis:
+Redis server
+
+Storage:
+S3-compatible storage
+
+Worker:
+Background worker service
+
+Architecture:
+
+              INTERNET
+                  |
+             Next.js App
+                  |
+              API Server
+             /    |    \
+            /     |     \
+     PostgreSQL  Redis  Storage
+                   |
+                 Worker
+                   |
+            Email/Automation
+
+Use environment variables for:
+- Database URL
+- Redis URL
+- Storage credentials
+- Email API key
+- Authentication secrets
+- Integration credentials
+
+============================================================
+PHASE 28 — BACKUP & DISASTER RECOVERY
+============================================================
+
+Required because this is financial data.
+
+Implement:
+- Automated PostgreSQL backups
+- Backup retention
+- Restore procedure
+- Storage backups
+- Database health checks
+- Error logging
+- Monitoring
+
+Test restoration periodically.
+
+Never assume:
+"Because the database is online, the data is safe."
+
+============================================================
+PHASE 29 — FUTURE BANKING & PAYMENT INTEGRATIONS
+============================================================
+
+Future integrations may include:
+- Nigerian payment providers
+- Open banking providers
+- Bank transaction feeds
+- Payment gateways
+
+Architecture should use an integration abstraction:
+
+Integration Provider
+    ->
+Adapter
+    ->
+BIZ-STRIVES Integration Layer
+    ->
+Transaction Detection
+    ->
+User Confirmation
+    ->
+Financial Engine
+
+This prevents the entire platform from being tied to one provider.
+
+============================================================
+PHASE 30 — FINAL PRODUCT POLISH
+============================================================
+
+Before public SaaS launch:
+
+- Professional landing page
+- Pricing page
+- Documentation
+- Help center
+- Onboarding flow
+- Empty states
+- Error states
+- Loading states
+- Mobile responsiveness
+- Accessibility
+- Security review
+- Performance optimization
+- Database optimization
+- SEO
+- Analytics
+- Product feedback system
+
+============================================================
+V1 MVP — WHAT TO ACTUALLY BUILD FIRST
+============================================================
+
+DO NOT BUILD ALL 30 PHASES AT ONCE.
+
+The first usable BIZ-STRIVES MVP should contain:
+
+1. Authentication
+2. Business setup
+3. Currency system
+4. Accounts
+5. Income
+6. Business expenses
+7. Personal spending
+8. Categories
+9. Customers
+10. Projects
+11. Basic invoices
+12. Savings/reserved funds
+13. Dashboard
+14. Date filtering
+15. Monthly records
+16. Basic reports
+17. Monthly statement PDF
+18. Configurable statement email
+19. Notification center
+20. Basic audit logs
+21. Responsive UI
+22. PostgreSQL database
+23. Self-hosted backend
+24. Background job infrastructure
+
+Do NOT block V1 on:
+- Bank integrations
+- Open banking
+- WhatsApp
+- SMS
+- Payment gateways
+- SaaS billing
+- Native mobile apps
+- Advanced automation
+- Complex tax systems
+
+============================================================
+CRITICAL BUSINESS RULES
+============================================================
+
+RULE 1:
+The financial engine must remain simple.
+
+    MONEY RECEIVED
+    - BUSINESS EXPENSES
+    - PERSONAL SPENDING
+    = MONEY REMAINING
+
+RULE 2:
+Savings allocations are reserved funds, not business expenses.
+
+RULE 3:
+Account transfers are not income or expenses.
+
+RULE 4:
+Every financial transaction must have a real transaction date.
+
+RULE 5:
+Historical monthly reports must be reconstructable from individual
+transactions.
+
+RULE 6:
+Changing the current date/month must never alter historical records.
+
+RULE 7:
+Closed months must be protected from accidental changes.
+
+RULE 8:
+Currency must be stored with every financial transaction.
+
+RULE 9:
+Location detection can suggest currency but must never silently modify
+existing records.
+
+RULE 10:
+Customer payments should be connected to customers/projects whenever
+possible.
+
+RULE 11:
+Invoices may initially be sent manually.
+
+RULE 12:
+Bank transaction detection is a future integration and must not be
+required for the core financial system.
+
+RULE 13:
+The website notification about detected money should ask the user what
+the money is for rather than automatically guessing.
+
+RULE 14:
+The application must remain simple enough for a small business owner.
+
+RULE 15:
+The database must be designed for multiple businesses even if the first
+deployment has only one business.
+
+============================================================
+INITIAL UI STRUCTURE
+============================================================
+
+Main navigation:
+
+Dashboard
+Transactions
+Income
+Expenses
+Personal
+Customers
+Projects
+Invoices
+Savings
+Accounts
+Reports
+Statements
+Automations
+Notifications
+Settings
+
+Dashboard quick actions:
++ Add Income
++ Add Business Expense
++ Add Personal Spending
++ Add Customer
++ Create Project
++ Create Invoice
++ Add Savings
++ Transfer Money
+
+Settings:
+- Business profile
+- Currency
+- Accounts
+- Categories
+- Notifications
+- Email
+- Monthly statement
+- Automations
+- Security
+- User profile
+
+============================================================
+DEVELOPMENT INSTRUCTIONS FOR OPENCODE
+============================================================
+
+Build BIZ-STRIVES incrementally.
+
+Do NOT generate the entire application in one huge step.
+
+For each phase:
+
+1. Inspect the existing project.
+2. Plan the implementation.
+3. Create/update database schema.
+4. Create migrations.
+5. Build backend functionality.
+6. Build frontend UI.
+7. Add validation.
+8. Add tests.
+9. Run tests.
+10. Fix errors.
+11. Verify existing features still work.
+12. Document the completed phase.
+13. Only then move to the next phase.
+
+Never destroy existing working functionality to implement a new feature.
+
+Use clean modular architecture.
+
+Prefer reusable components.
+
+Keep financial calculations centralized in one financial service/module so
+that the same calculations are used by:
+- Dashboard
+- Reports
+- Monthly records
+- Statements
+- Notifications
+- Exports
+
+Avoid duplicating financial formulas throughout the codebase.
+
+============================================================
+FIRST IMPLEMENTATION TASK
+============================================================
+
+Before building UI pages, create the project foundation and database
+architecture for:
+
+- Users
+- Businesses
+- Business members
+- Accounts
+- Transactions
+- Categories
+- Customers
+- Projects
+- Invoices
+- Invoice items
+- Savings goals
+- Savings allocations
+- Monthly periods
+- Statements
+- Notifications
+- Automations
+- Audit logs
+
+Then create the first financial service implementing:
+
+    Total Income
+    - Business Expenses
+    - Personal Spending
+    = Money Remaining
+
+Also implement:
+- Reserved savings
+- Account balances
+- Date filtering
+- Currency-aware amounts
+- Opening balances
+
+After the foundation is tested, proceed to authentication and the first
+dashboard.
+
+============================================================
+END GOAL
+============================================================
+
+BIZ-STRIVES should eventually become a complete but easy-to-use business
+financial platform where a business owner can:
+
+- Know exactly how much money came in.
+- Know where money went.
+- Separate business expenses from personal spending.
+- See how much money remains.
+- Reserve money for savings/goals.
+- Track customers and projects.
+- Create and track invoices.
+- Monitor accounts.
+- Review monthly performance.
+- Automatically receive monthly statements.
+- Receive notifications when money is detected.
+- Allocate newly received money.
+- Send customer communications.
+- Send birthday greetings.
+- Export financial records.
+- Manage multiple businesses.
+- Eventually connect banks/payment providers.
+- Eventually offer BIZ-STRIVES as a SaaS product.
+
+Keep the experience SIMPLE.
+Keep the architecture SCALABLE.
+Keep financial data SAFE.
+Build each phase carefully and test it before moving forward.

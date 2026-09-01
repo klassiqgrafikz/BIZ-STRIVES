@@ -1,0 +1,559 @@
+// BIZ-STRIVES — Phase 0 Foundation Schema
+// Vercel-unified: PostgreSQL + Prisma
+// Principle: every business-owned record has businessId for multi-tenancy & data isolation
+// Spec ref: BIZ-STRIVES_Complete_Development_Phases-2.txt:1537-1560, 1064-1091
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ── Auth & Business ──────────────────────────────────────────
+model User {
+  id              String   @id @default(cuid())
+  email           String   @unique
+  passwordHash    String
+  name            String?
+  emailVerifiedAt DateTime?
+  timezone        String   @default("Africa/Lagos")
+  dateFormat      String   @default("DD/MM/YYYY")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  memberships BusinessMember[]
+  auditLogs   AuditLog[]
+  notifications Notification[]
+  verificationTokens VerificationToken[]
+
+  @@map("users")
+}
+
+model Business {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  logoUrl     String?
+  email       String?
+  phone       String?
+  address     String?
+  description String?
+  timezone    String   @default("Africa/Lagos")
+  baseCurrency String  @default("NGN")
+  currencySymbol String @default("₦")
+  dateFormat  String   @default("DD/MM/YYYY")
+  // Email/Statement settings — Phase 14
+  statementEmail        String?
+  monthlyStatementEnabled Boolean @default(true)
+  statementTime         String? // e.g., "22:00"
+  emailLogs             EmailLog[] @relation("BusinessEmailLogs")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  members           BusinessMember[]
+  accounts          Account[]
+  categories        Category[]
+  customers         Customer[]
+  projects          Project[]
+  transactions      Transaction[]
+  invoices          Invoice[]
+  savingsGoals      SavingsGoal[]
+  savingsAllocations SavingsAllocation[]
+  monthlyPeriods    MonthlyPeriod[]
+  statements        Statement[]
+  notifications     Notification[]
+  automations       Automation[]
+  auditLogs         AuditLog[]
+
+  @@map("businesses")
+}
+
+model BusinessMember {
+  id         String   @id @default(cuid())
+  userId     String
+  businessId String
+  role       MemberRole @default(Owner)
+  invitedAt  DateTime @default(now())
+  createdAt  DateTime @default(now())
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, businessId])
+  @@map("business_members")
+}
+
+enum MemberRole {
+  Owner
+  Admin
+  Accountant
+  Staff
+  Viewer
+}
+
+// ── Accounts / Money Locations (Phase 3) ─────────────────────
+model Account {
+  id             String      @id @default(cuid())
+  businessId     String
+  name           String
+  type           AccountType
+  currency       String      @default("NGN")
+  openingBalance Decimal     @default(0) @db.Decimal(14, 2)
+  currentBalance Decimal     @default(0) @db.Decimal(14, 2)
+  status         AccountStatus @default(Active)
+  notes          String?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  business     Business      @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+  savingsAllocations SavingsAllocation[]
+
+  @@unique([businessId, name])
+  @@map("accounts")
+}
+
+enum AccountType {
+  Bank
+  Cash
+  Savings
+  MobileMoney
+  Other
+}
+
+enum AccountStatus {
+  Active
+  Archived
+}
+
+// ── Categories (Phase 5) ─────────────────────────────────────
+model Category {
+  id         String       @id @default(cuid())
+  businessId String
+  type       CategoryType
+  name       String
+  isArchived Boolean      @default(false)
+  isSystem   Boolean      @default(false)
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+
+  business     Business      @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+
+  @@unique([businessId, type, name])
+  @@map("categories")
+}
+
+enum CategoryType {
+  INCOME
+  BUSINESS_EXPENSE
+  PERSONAL_SPENDING
+}
+
+// ── Transactions — Core Financial Engine (Phase 4) ──────────
+// Rule: MONEY RECEIVED - BUSINESS_EXPENSES - PERSONAL_SPENDING = MONEY REMAINING
+// Savings & Transfers are NOT income/expense
+model Transaction {
+  id            String          @id @default(cuid())
+  businessId    String
+  type          TransactionType
+  amount        Decimal         @db.Decimal(14, 2)
+  currency      String          @default("NGN")
+  exchangeRate  Decimal         @default(1) @db.Decimal(14, 6)
+  baseAmount    Decimal         @db.Decimal(14, 2) // amount * exchangeRate, for baseCurrency reporting
+  date          DateTime        @db.Date
+  categoryId    String?
+  accountId     String?
+  customerId    String?
+  projectId     String?
+  description   String?
+  vendor        String?
+  reference     String?
+  status        TransactionStatus @default(Completed)
+  notes         String?
+  createdById   String?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  business Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  category Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  account  Account?  @relation(fields: [accountId], references: [id], onDelete: SetNull)
+  customer Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  project  Project?  @relation(fields: [projectId], references: [id], onDelete: SetNull)
+
+  @@index([businessId, date])
+  @@index([businessId, type])
+  @@index([businessId, accountId])
+  @@map("transactions")
+}
+
+enum TransactionType {
+  INCOME
+  BUSINESS_EXPENSE
+  PERSONAL_SPENDING
+  SAVINGS_ALLOCATION
+  SAVINGS_WITHDRAWAL
+  ACCOUNT_TRANSFER
+  OTHER
+}
+
+enum TransactionStatus {
+  Pending
+  Completed
+  Cancelled
+}
+
+// ── Customers (Phase 6) ──────────────────────────────────────
+model Customer {
+  id        String   @id @default(cuid())
+  businessId String
+  fullName  String
+  email     String?
+  phone     String?
+  company   String?
+  birthday  DateTime? @db.Date
+  address   String?
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  business     Business      @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  projects     Project[]
+  transactions Transaction[]
+  invoices     Invoice[]
+
+  @@index([businessId, fullName])
+  @@map("customers")
+}
+
+// ── Projects / Services (Phase 7) ────────────────────────────
+model Project {
+  id            String        @id @default(cuid())
+  businessId    String
+  customerId    String
+  name          String
+  serviceType   String?
+  description   String?
+  startDate     DateTime?     @db.Date
+  dueDate       DateTime?     @db.Date
+  agreedAmount  Decimal       @db.Decimal(14, 2)
+  amountPaid    Decimal       @default(0) @db.Decimal(14, 2)
+  currency      String        @default("NGN")
+  status        ProjectStatus @default(Draft)
+  notes         String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  business     Business      @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  customer     Customer      @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+  invoices     Invoice[]
+
+  @@index([businessId, customerId])
+  @@map("projects")
+}
+
+enum ProjectStatus {
+  Draft
+  Active
+  Completed
+  Cancelled
+  OnHold
+}
+
+// ── Invoices (Phase 8) ───────────────────────────────────────
+model Invoice {
+  id            String        @id @default(cuid())
+  businessId    String
+  invoiceNumber String
+  customerId    String
+  projectId     String?
+  invoiceDate   DateTime      @db.Date
+  dueDate       DateTime?     @db.Date
+  subtotal      Decimal       @db.Decimal(14, 2)
+  discount      Decimal       @default(0) @db.Decimal(14, 2)
+  tax           Decimal       @default(0) @db.Decimal(14, 2)
+  total         Decimal       @db.Decimal(14, 2)
+  amountPaid    Decimal       @default(0) @db.Decimal(14, 2)
+  balanceDue    Decimal       @db.Decimal(14, 2)
+  currency      String        @default("NGN")
+  status        InvoiceStatus @default(Draft)
+  notes         String?
+  terms         String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  business Business      @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  customer Customer      @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  project  Project?      @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  items    InvoiceItem[]
+
+  @@unique([businessId, invoiceNumber])
+  @@index([businessId, status])
+  @@map("invoices")
+}
+
+model InvoiceItem {
+  id          String  @id @default(cuid())
+  invoiceId   String
+  description String
+  quantity    Decimal @db.Decimal(10, 2)
+  unitPrice   Decimal @db.Decimal(14, 2)
+  amount      Decimal @db.Decimal(14, 2)
+
+  invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@map("invoice_items")
+}
+
+enum InvoiceStatus {
+  Draft
+  Sent
+  PartiallyPaid
+  Paid
+  Overdue
+  Cancelled
+}
+
+// ── Savings & Reserved Funds (Phase 9) ───────────────────────
+model SavingsGoal {
+  id          String           @id @default(cuid())
+  businessId  String
+  name        String
+  targetAmount Decimal         @db.Decimal(14, 2)
+  currentAmount Decimal        @default(0) @db.Decimal(14, 2)
+  currency    String           @default("NGN")
+  targetDate  DateTime?        @db.Date
+  frequency   SavingsFrequency @default(Monthly)
+  status      SavingsStatus    @default(Active)
+  notes       String?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  business    Business            @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  allocations SavingsAllocation[]
+
+  @@unique([businessId, name])
+  @@map("savings_goals")
+}
+
+model SavingsAllocation {
+  id         String                @id @default(cuid())
+  businessId String
+  goalId     String
+  amount     Decimal               @db.Decimal(14, 2)
+  type       SavingsAllocationType
+  date       DateTime              @db.Date
+  accountId  String?
+  notes      String?
+  createdAt  DateTime              @default(now())
+
+  business Business    @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  goal     SavingsGoal @relation(fields: [goalId], references: [id], onDelete: Cascade)
+  account  Account?    @relation(fields: [accountId], references: [id], onDelete: SetNull)
+
+  @@index([businessId, goalId])
+  @@map("savings_allocations")
+}
+
+enum SavingsFrequency {
+  Daily
+  Weekly
+  Biweekly
+  Monthly
+  Custom
+}
+
+enum SavingsStatus {
+  Active
+  Completed
+  Archived
+}
+
+enum SavingsAllocationType {
+  CONTRIBUTION
+  WITHDRAWAL
+}
+
+// ── Monthly Periods & Statements (Phase 12-13) ───────────────
+model MonthlyPeriod {
+  id              String       @id @default(cuid())
+  businessId      String
+  year            Int
+  month           Int          // 1-12
+  openingBalance  Decimal      @db.Decimal(14, 2)
+  totalIncome     Decimal      @default(0) @db.Decimal(14, 2)
+  businessExpenses Decimal     @default(0) @db.Decimal(14, 2)
+  personalSpending Decimal     @default(0) @db.Decimal(14, 2)
+  savingsAllocated Decimal     @default(0) @db.Decimal(14, 2)
+  transfers       Decimal      @default(0) @db.Decimal(14, 2)
+  moneyRemaining  Decimal      @db.Decimal(14, 2)
+  closingBalance  Decimal      @db.Decimal(14, 2)
+  transactionCount Int         @default(0)
+  status          PeriodStatus @default(Open)
+  closedAt        DateTime?
+  reopenedAt      DateTime?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  business   Business    @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  statements Statement[]
+
+  @@unique([businessId, year, month])
+  @@map("monthly_periods")
+}
+
+enum PeriodStatus {
+  Open
+  Closed
+}
+
+model Statement {
+  id         String   @id @default(cuid())
+  businessId String
+  periodId   String
+  pdfUrl     String?
+  csvUrl     String?
+  generatedAt DateTime @default(now())
+  createdAt  DateTime @default(now())
+
+  business Business      @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  period   MonthlyPeriod @relation(fields: [periodId], references: [id], onDelete: Cascade)
+
+  @@map("statements")
+}
+
+// ── Notifications (Phase 15) ─────────────────────────────────
+model Notification {
+  id         String           @id @default(cuid())
+  businessId String?
+  userId     String?
+  type       NotificationType
+  title      String
+  message    String
+  read       Boolean          @default(false)
+  actionLink String?
+  createdAt  DateTime         @default(now())
+
+  business Business? @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  user     User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([businessId, read])
+  @@map("notifications")
+}
+
+enum NotificationType {
+  MoneyReceived
+  InvoiceOverdue
+  SavingsDue
+  StatementGenerated
+  MonthlyReportReady
+  System
+}
+
+// ── Automation Engine (Phase 19) ─────────────────────────────
+model Automation {
+  id          String          @id @default(cuid())
+  businessId  String
+  name        String
+  triggerType AutomationTrigger
+  conditions  Json?
+  actionType  AutomationAction
+  schedule    String?         // cron expression
+  enabled     Boolean         @default(true)
+  lastRun     DateTime?
+  nextRun     DateTime?
+  errorState  String?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@map("automations")
+}
+
+enum AutomationTrigger {
+  MonthEnds
+  StatementGenerated
+  CustomerBirthday
+  PaymentDetected
+  SavingsDateArrives
+  Custom
+}
+
+enum AutomationAction {
+  GenerateStatement
+  EmailStatement
+  SendBirthdayMessage
+  NotifyUser
+  Custom
+}
+
+// ── Password Reset & Verification (Phase 1) ────────────────────
+model VerificationToken {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  type      TokenType
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([userId])
+  @@map("verification_tokens")
+}
+
+enum TokenType {
+  EmailVerification
+  PasswordReset
+}
+
+// ── Audit Logs (Phase 21) ────────────────────────────────────
+model AuditLog {
+  id         String   @id @default(cuid())
+  businessId String?
+  userId     String?
+  action     String   // e.g., "transaction.created", "month.closed"
+  entity     String   // e.g., "Transaction", "MonthlyPeriod"
+  entityId   String?
+  before     Json?
+  after      Json?
+  createdAt  DateTime @default(now())
+
+  business Business? @relation(fields: [businessId], references: [id], onDelete: SetNull)
+  user     User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([businessId, createdAt])
+  @@map("audit_logs")
+}
+
+// ── Email Logs (Phase 14) ────────────────────────────────────
+model EmailLog {
+  id         String      @id @default(cuid())
+  businessId String?
+  recipient  String
+  type       String      // "monthly_statement", "invoice", etc.
+  subject    String?
+  status     EmailStatus @default(Pending)
+  errorMessage String?
+  retryCount Int         @default(0)
+  sentAt     DateTime?
+  createdAt  DateTime    @default(now())
+
+  business Business? @relation("BusinessEmailLogs", fields: [businessId], references: [id], onDelete: SetNull)
+
+  @@index([status])
+  @@map("email_logs")
+}
+
+enum EmailStatus {
+  Pending
+  Sent
+  Failed
+}
