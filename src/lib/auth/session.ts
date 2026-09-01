@@ -1,37 +1,27 @@
-import { cookies } from "next/verify";
-import { verifyAccessToken, JwtPayload } from "./jwt";
+// Helper to get cookies from the request
+function getCookies(req: Request): Record<string, string> {
+  const cookieHeader = req.headers.get("cookie") || "";
+  const cookies: Record<string, string> = {};
+  cookieHeader.split(";").forEach((c) => {
+    const [key, ...value] = c.split("=");
+    cookies[key.trim()] = value.join("=").trim();
+  });
+  return cookies;
+}
 
-export const COOKIE_NAME = "bizstrives_token";
-
-// Check for hardcoded 0425 login cookie
+// Hardcoded 0425 login check
 export function isHardcodedLogin(req: Request): boolean {
-  const cookieHeader = req.headers.get("cookie") || "";
-  return cookieHeader.includes("logged_in=true");
+  const cookies = getCookies(req);
+  return cookies.logged_in === "true";
 }
 
-export async function getSession(): Promise<(JwtPayload & { business?: unknown }) | null> {
-  const store = await cookies();
-  const token = store.get(COOKIE_NAME)?.value;
-  if (!token) return null;
-  try {
-    const payload = verifyAccessToken(token);
-    return payload;
-  } catch {
-    return null;
-  }
-}
-
-// Helper for route handlers: extract token from request cookie or Authorization header
+// Extract the token from cookie header
 export function getTokenFromRequest(req: Request): string | null {
-  const cookieHeader = req.headers.get("cookie") || "";
-  const match = cookieHeader.match(new RegExp(`${COOKIE_NAME}=([^;]+)`));
-  if (match) return decodeURIComponent(match[1]);
-  const auth = req.headers.get("authorization");
-  if (auth?.startsWith("Bearer ")) return auth.slice(7);
-  return null;
+  const cookies = getCookies(req);
+  return cookies[COOKIE_NAME] || null;
 }
 
-// Verify request auth - checks JWT token OR hardcoded login
+// Verify request auth - checks for hardcoded 0425 login OR JWT token
 export function verifyRequestAuth(req: Request): JwtPayload | null {
   // First check for hardcoded 0425 login
   if (isHardcodedLogin(req)) {
@@ -46,3 +36,5 @@ export function verifyRequestAuth(req: Request): JwtPayload | null {
     return null;
   }
 }
+
+export const COOKIE_NAME = "bizstrives_token";
