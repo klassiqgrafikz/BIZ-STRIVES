@@ -9,12 +9,25 @@ if (!process.env.DIRECT_URL) {
   process.env.DIRECT_URL = process.env.DATABASE_URL;
 }
 const { execSync } = require("child_process");
+const isDummy = process.env.DATABASE_URL.includes("user:password@localhost");
 try {
   console.log("[build] Running prisma generate...");
   execSync("npx prisma generate", { stdio: "inherit" });
 } catch (e) {
   console.error("[build] prisma generate failed", e);
   process.exit(1);
+}
+if (!isDummy) {
+  try {
+    console.log("[build] DATABASE_URL is real (Supabase) — running prisma db push...");
+    execSync("npx prisma db push --accept-data-loss", { stdio: "inherit" });
+    console.log("[build] prisma db push OK — tables ready");
+  } catch (e) {
+    console.warn("[build] prisma db push failed (may already be synced)", e.message);
+    // don't fail build — continue to next build
+  }
+} else {
+  console.log("[build] Dummy DATABASE_URL — skipping prisma db push (mock mode, UI still works)");
 }
 try {
   console.log("[build] Running next build --webpack...");
