@@ -2,6 +2,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { AuthCard } from "@/components/auth/AuthCard";
 import { Input, Button, useAuthSubmit } from "@/components/auth/AuthForm";
 
@@ -9,11 +10,15 @@ export default function LoginClient() {
   const params = useSearchParams();
   const next = params.get("next") || "/dashboard";
   const [code, setCode] = useState("0425");
-  const { submit, loading, error, info } = useAuthSubmit("/api/auth/login", { redirectTo: next as string });
+  const { submit, loading, error, info } = useAuthSubmit("/api/auth/login");
+  const router = useRouter();
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    await submit({ code });
+    const result = await submit({ code });
+    if (result.ok) {
+      router.push(next);
+    }
   }
 
   return (
