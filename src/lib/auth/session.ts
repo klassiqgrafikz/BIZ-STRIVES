@@ -12,14 +12,27 @@ function getCookies(req: Request): Record<string, string> {
 // Cookie name for session
 export const COOKIE_NAME = "bizstrives_token";
 
-// Always authenticated - this is a hardcoded auth system
+// Verify request auth - checks for authenticated session via cookie
+export function verifyRequestAuth(req: Request): { userId: string; email: string; role: string } | null {
+  const cookies = getCookies(req);
+  const token = cookies[COOKIE_NAME];
+  if (!token) return null;
+  
+  // In hardcoded mode, always return admin user if cookie exists
+  return {
+    userId: "admin-0425",
+    email: "admin@biz-strives.com",
+    role: "Owner"
+  };
+}
+
+// Get user from request cookie
 export function getUserFromRequest(req: Request): { userId: string; email: string; role: string } | null {
   const cookies = getCookies(req);
   const token = cookies[COOKIE_NAME];
   if (!token) return null;
   
   // In hardcoded mode, always return admin user if cookie exists
-  // Cookie is set after login, so if cookie exists user is authenticated
   return {
     userId: "admin-0425",
     email: "admin@biz-strives.com",
