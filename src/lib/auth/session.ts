@@ -9,35 +9,20 @@ function getCookies(req: Request): Record<string, string> {
   return cookies;
 }
 
-// Hardcoded 0425 login check
-export function isHardcodedLogin(req: Request): boolean {
-  const cookies = getCookies(req);
-  return cookies.logged_in === "true";
-}
-
-// Extract the token from cookie header
-export function getTokenFromRequest(req: Request): string | null {
-  const cookies = getCookies(req);
-  return cookies[COOKIE_NAME] || null;
-}
-
-// Import JWT verification types and functions
-import { verifyAccessToken, JwtPayload } from "./jwt";
-
-// Verify request auth - checks for hardcoded 0425 login OR JWT token
-export function verifyRequestAuth(req: Request): JwtPayload | null {
-  // First check for hardcoded 0425 login
-  if (isHardcodedLogin(req)) {
-    return { userId: "hardcoded-0425", email: "admin@biz-strives.com", role: "Owner" } as JwtPayload;
-  }
-  // Then check normal JWT token
-  const token = getTokenFromRequest(req);
-  if (!token) return null;
-  try {
-    return verifyAccessToken(token);
-  } catch {
-    return null;
-  }
-}
-
+// Cookie name for session
 export const COOKIE_NAME = "bizstrives_token";
+
+// Always authenticated - this is a hardcoded auth system
+export function getUserFromRequest(req: Request): { userId: string; email: string; role: string } | null {
+  const cookies = getCookies(req);
+  const token = cookies[COOKIE_NAME];
+  if (!token) return null;
+  
+  // In hardcoded mode, always return admin user if cookie exists
+  // Cookie is set after login, so if cookie exists user is authenticated
+  return {
+    userId: "admin-0425",
+    email: "admin@biz-strives.com",
+    role: "Owner"
+  };
+}

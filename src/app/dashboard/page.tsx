@@ -1,16 +1,8 @@
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
 import Link from "next/link";
-import { verifyAccessToken } from "@/lib/auth/jwt";
 import LiveDashboard from "@/components/dashboard/LiveDashboard";
 import BusinessSwitcher from "@/components/BusinessSwitcher";
 
-export default async function DashboardPage() {
-  const store = await cookies();
-  const tok = store.get("bizstrives_token")?.value;
-  if (!tok) redirect("/login?next=/dashboard");
-  try { verifyAccessToken(tok); } catch { redirect("/login?next=/dashboard"); }
-
+export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-slate-50">
       <header className="sticky top-0 z-10 border-b border-slate-200 bg-white">
@@ -24,9 +16,6 @@ export default async function DashboardPage() {
             <BusinessSwitcher />
             <Link href="/transactions" className="rounded-full bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white">Transactions →</Link>
             <Link href="/reports" className="rounded-full border border-slate-200 px-3 py-1.5 text-xs">Reports →</Link>
-            <form action="/api/auth/logout" method="post">
-              <button className="rounded-full border border-slate-200 px-3 py-1 text-xs font-medium hover:bg-slate-50">Logout</button>
-            </form>
           </div>
         </div>
       </header>
