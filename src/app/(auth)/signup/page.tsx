@@ -1,18 +1,17 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
-import { AuthCard, Button } from "@/components/auth/AuthCard";
+import { AuthCard, Button } from "@/components/auth/AuthForm";
+import { Input } from "@/components/auth/AuthForm";
 
 export default function SignupPage() {
   return (
     <AuthCard
       title="Create your workspace"
       subtitle="One account → your business finance hub. Owner role by default."
-      footer={
-        <>
-          Already have an account? <Link href="/login" className="font-semibold text-emerald-700 hover:underline">Log in with code 0425</Link>
-        </>
-      }
+      footer={<>
+        Already have an account? <Link href="/login" className="font-semibold text-emerald-700 hover:underline">Log in with code 0425</Link>
+      </>}
     >
       <p className="text-center my-8">Hardcoded Auth Mode</p>
       <p className="text-center text-slate-500">Signup is disabled in this mode. Use the login form below with code: <strong>0425</strong></p>

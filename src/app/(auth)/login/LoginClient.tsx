@@ -29,7 +29,7 @@ export default function LoginClient() {
         </div>
         {error && <p className="rounded-xl bg-red-50 border border-red-200 px-3 py-2 text-sm text-red-700">{error}</p>}
         {info && <p className="rounded-xl bg-amber-50 border border-amber-200 px-3 py-2 text-sm text-amber-800">{info}</p>}
-        <Button type="submit" loading={loading}>Log in</Button>
+        <Button type="submit" loading={logging}>Log in</Button>
       </form>
     </AuthCard>
   );
