@@ -2,7 +2,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { AuthCard, Input, Button, useAuthSubmit } from "@/components/auth/AuthForm";
+import { AuthCard } from "@/components/auth/AuthCard";
+import { Input, Button, useAuthSubmit } from "@/components/auth/AuthForm";
 
 export default function LoginClient() {
   const params = useSearchParams();
