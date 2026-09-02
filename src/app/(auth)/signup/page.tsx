@@ -1,7 +1,8 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
-import { AuthCard, Button } from "@/components/auth/AuthForm";
+import { useSearchParams } from "next/navigation";
+import { AuthCard } from "@/components/auth/AuthCard";
 import { Input } from "@/components/auth/AuthForm";
 
 export default function SignupPage() {
@@ -16,7 +17,6 @@ export default function SignupPage() {
       <p className="text-center my-8">Hardcoded Auth Mode</p>
       <p className="text-center text-slate-500">Signup is disabled in this mode. Use the login form below with code: <strong>0425</strong></p>
       <div className="mt-6">
-        <Button disabled>Create workspace</Button>
       </div>
       <p className="text-xs text-slate-400 text-center">By using this system you agree to the hardcoded auth terms.</p>
     </AuthCard>
